@@ -1,47 +1,46 @@
 {
   "nodes": [
-    { "id": "s3",      "label": "Amazon S3",          "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/s3.png" },
-    { "id": "lambda",  "label": "AWS Lambda",         "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/lambda.png" },
-    { "id": "stepfn",  "label": "Step Functions",     "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/stepfunctions.png" },
-    { "id": "glue1",   "label": "Glue ETL (S3 → RDS)","image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/glue.png" },
-    { "id": "rds",     "label": "Amazon RDS",         "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/rds.png" },
-    { "id": "glue2",   "label": "Glue (RDS → Snow)",  "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/glue.png" },
-    { "id": "snow",    "label": "Snowflake",          "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/snowflake.png" },
-    { "id": "sns",     "label": "Amazon SNS",         "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/sns.png" },
-    { "id": "iam",     "label": "IAM Roles",          "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/iam.png" },
-    { "id": "cloudwatch","label":"CloudWatch",        "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/cloudwatch.png" },
-    { "id": "secrets", "label": "Secrets Manager",    "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/secretsmanager.png" },
-    { "id": "vpc",     "label": "VPC",                "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/vpc.png" },
-    { "id": "kms",     "label": "KMS",                "image": "https://github.com/rajatdhawale01/cloud-icons/tree/main/icons/kms.png" }
+    { "id": "s3",        "label": "Amazon S3",                     "image": "https://rajatdhawale01.github.io/cloud-icons/icons/s3.png" },
+    { "id": "lambda",    "label": "AWS Lambda",                    "image": "https://rajatdhawale01.github.io/cloud-icons/icons/lambda.png" },
+    { "id": "stepfn",    "label": "Step Functions",                "image": "https://rajatdhawale01.github.io/cloud-icons/icons/stepfunctions.png" },
+    { "id": "glue1",     "label": "Glue ETL (S3 → RDS)",           "image": "https://rajatdhawale01.github.io/cloud-icons/icons/glue.png" },
+    { "id": "rds",       "label": "Amazon RDS",                    "image": "https://rajatdhawale01.github.io/cloud-icons/icons/rds.png" },
+    { "id": "glue2",     "label": "Glue (RDS → Snowflake)",        "image": "https://rajatdhawale01.github.io/cloud-icons/icons/glue.png" },
+    { "id": "snow",      "label": "Snowflake",                     "image": "https://rajatdhawale01.github.io/cloud-icons/icons/snowflake.png" },
+    { "id": "sns",       "label": "Amazon SNS",                    "image": "https://rajatdhawale01.github.io/cloud-icons/icons/sns.png" },
+    { "id": "iam",       "label": "IAM Roles",                     "image": "https://rajatdhawale01.github.io/cloud-icons/icons/iam.png" },
+    { "id": "cloudwatch","label": "CloudWatch",                    "image": "https://rajatdhawale01.github.io/cloud-icons/icons/cloudwatch.png" },
+    { "id": "secrets",   "label": "Secrets Manager",               "image": "https://rajatdhawale01.github.io/cloud-icons/icons/secretsmanager.png" },
+    { "id": "vpc",       "label": "VPC",                           "image": "https://rajatdhawale01.github.io/cloud-icons/icons/vpc.png" },
+    { "id": "kms",       "label": "KMS",                           "image": "https://rajatdhawale01.github.io/cloud-icons/icons/kms.png" }
   ],
   "edges": [
-    { "source": "s3",    "target": "lambda", "category": "trigger" },
-    { "source": "lambda","target": "stepfn", "category": "trigger" },
-    { "source": "stepfn","target": "glue1",  "category": "trigger" },
+    { "source": "s3",     "target": "lambda",  "category": "trigger" },
+    { "source": "lambda", "target": "stepfn",  "category": "trigger" },
+    { "source": "stepfn", "target": "glue1",   "category": "trigger" },
 
-    { "source": "glue1", "target": "rds",    "category": "data" },
-    { "source": "stepfn","target": "glue2",  "category": "trigger" },
-    { "source": "glue2", "target": "snow",   "category": "data" },
+    { "source": "glue1",  "target": "rds",     "category": "data" },
+    { "source": "stepfn", "target": "glue2",   "category": "trigger" },
+    { "source": "glue2",  "target": "snow",    "category": "data" },
 
-    { "source": "stepfn","target": "sns",    "category": "notification" },
+    { "source": "stepfn", "target": "sns",     "category": "notification" },
 
-    { "source": "lambda","target": "cloudwatch", "category": "monitoring" },
-    { "source": "glue1", "target": "cloudwatch", "category": "monitoring" },
-    { "source": "glue2", "target": "cloudwatch", "category": "monitoring" },
+    { "source": "lambda", "target": "cloudwatch", "category": "monitoring" },
+    { "source": "glue1",  "target": "cloudwatch", "category": "monitoring" },
+    { "source": "glue2",  "target": "cloudwatch", "category": "monitoring" },
 
-    { "source": "iam",   "target": "lambda", "category": "security" },
-    { "source": "iam",   "target": "glue1",  "category": "security" },
-    { "source": "iam",   "target": "glue2",  "category": "security" },
+    { "source": "iam",    "target": "lambda",  "category": "security" },
+    { "source": "iam",    "target": "glue1",   "category": "security" },
+    { "source": "iam",    "target": "glue2",   "category": "security" },
 
-    { "source": "secrets","target": "rds",   "category": "secrets" },
-    { "source": "secrets","target": "snow",  "category": "secrets" },
+    { "source": "secrets","target": "rds",     "category": "secrets" },
+    { "source": "secrets","target": "snow",    "category": "secrets" },
 
-    { "source": "s3",    "target": "kms",    "category": "encryption" },
-    { "source": "rds",   "target": "kms",    "category": "encryption" },
+    { "source": "s3",     "target": "kms",     "category": "encryption" },
+    { "source": "rds",    "target": "kms",     "category": "encryption" },
 
-    { "source": "rds",   "target": "vpc",    "category": "network" },
-    { "source": "glue1", "target": "vpc",    "category": "network" },
-    { "source": "glue2", "target": "vpc",    "category": "network" }
+    { "source": "rds",    "target": "vpc",     "category": "network" },
+    { "source": "glue1",  "target": "vpc",     "category": "network" },
+    { "source": "glue2",  "target": "vpc",     "category": "network" }
   ]
 }
-
