@@ -5,24 +5,14 @@
   <title>ETL Pipeline — AWS to Snowflake</title>
   <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
   <style>
-    body,html,#cy {
-      margin:0; padding:0; height:100%; width:100%;
-      background:#0b1220; color:#e5e7eb;
-      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    }
-    #legend {
-      position:absolute; top:10px; left:10px;
-      background:rgba(15,23,42,0.9);
-      padding:12px; border-radius:8px;
-      font-size:13px; color:#e5e7eb;
-    }
+    body,html,#cy { margin:0; padding:0; height:100%; width:100%;
+      background:#0b1220; color:#e5e7eb; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+    #legend { position:absolute; top:10px; left:10px; background:rgba(15,23,42,0.9);
+      padding:12px; border-radius:8px; font-size:13px; color:#e5e7eb; }
     .legend-item { display:flex; align-items:center; margin-bottom:4px; }
     .legend-color { width:14px; height:14px; margin-right:6px; border-radius:3px; }
-    #err {
-      position:absolute; bottom:10px; left:10px;
-      background:rgba(239,68,68,0.15); color:#fecaca;
-      padding:8px 10px; border-radius:8px; font-size:12px; display:none;
-    }
+    #err { position:absolute; bottom:10px; left:10px; background:rgba(239,68,68,0.15); color:#fecaca;
+      padding:8px 10px; border-radius:8px; font-size:12px; display:none; }
   </style>
 </head>
 <body>
@@ -41,23 +31,25 @@
   <div id="err"></div>
 
 <script>
-/* 🔹 1. Configure JSON source (your GitHub raw link) */
-const DATA_URL = "https://github.com/rajatdhawale01/cloud-icons/main/data.json";
+/* 🔹 1) Point to your GitHub Pages JSON */
+const DATA_URL = "https://rajatdhawale01.github.io/cloud-icons/data.json";
 
-/* 🔹 2. Cytoscape init */
+/* 🔹 Cytoscape init */
 const cy=cytoscape({
   container:document.getElementById('cy'),
   elements:[],
   style:[
     { selector:'node',
       style:{
-        'background-fit':'cover','background-image':'data(image)',
+        'background-image': 'data(image)',
+        'background-image-crossorigin': 'anonymous',   /* crucial for canvas + CORS */
+        'background-fit':'cover',
         'label':'data(label)','text-valign':'bottom','text-halign':'center',
         'font-size':10,'color':'#e5e7eb','text-margin-y':4,
         'width':70,'height':70,'border-width':2,'border-color':'#1f2937'
       }},
-    { selector:'node.packet',
-      style:{ 'width':8,'height':8,'background-color':'#ef4444','border-width':0,'label':'','z-index':9999 }},
+    { selector:'node.packet', style:{ 'width':8,'height':8,'background-color':'#ef4444','border-width':0,'label':'','z-index':9999 }},
+
     { selector:'edge[category="data"]',
       style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#ef4444','target-arrow-color':'#ef4444',
               'line-style':'dashed','line-dash-pattern':[8,4],'line-dash-offset':0 }},
@@ -86,28 +78,27 @@ const cy=cytoscape({
   wheelSensitivity:0.2
 });
 
-/* 🔹 3. Helpers */
 function runLayout(){ cy.layout({ name:'cose', animate:true, animationDuration:500, randomize:true }).run(); }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-/* 🔹 4. Streaming render */
+/* Streaming render */
 async function streamRender(data,delay=500){
   cy.elements().remove();
   for(const node of data.nodes){ cy.add({data:node}); runLayout(); await sleep(delay); }
   for(const edge of data.edges){ cy.add({data:edge}); runLayout(); await sleep(Math.max(150,delay/2)); }
 }
 
-/* 🔹 5. Flowing dashes (all categories except security) */
+/* Flowing dashes (all live categories) */
 let dashOffset=0;
 setInterval(()=>{
-  dashOffset = (dashOffset + 2) % 12;
+  dashOffset=(dashOffset+2)%12;
   cy.edges('[category="data"], [category="trigger"], [category="notification"], [category="monitoring"], [category="secrets"], [category="encryption"], [category="network"]').style('line-dash-offset', dashOffset);
 },80);
 
-/* 🔹 6. Moving packets along data edges */
+/* Moving packets along data edges */
 const PACKETS_PER_EDGE=3, MIN_SPEED=0.003, MAX_SPEED=0.009;
 let packetObjs=[];
-function randomBetween(a,b){ return a + Math.random()*(b-a); }
+function randomBetween(a,b){ return a+Math.random()*(b-a); }
 function clearPackets(){ cy.remove(packetObjs.map(p=>cy.getElementById(p.nodeId))); packetObjs=[]; }
 function initPackets(){
   clearPackets();
@@ -132,7 +123,7 @@ function animatePackets(){
   requestAnimationFrame(animatePackets);
 }
 
-/* 🔹 7. Collapse/expand neighbors */
+/* Collapse/expand neighbors */
 const collapsed=new Set();
 cy.on('tap','node',evt=>{
   const id=evt.target.id();
@@ -141,8 +132,10 @@ cy.on('tap','node',evt=>{
   runLayout();
 });
 
-/* 🔹 8. Error handling + JSON fetch */
+/* Error UI */
 function showErr(msg){ const e=document.getElementById('err'); e.textContent=msg; e.style.display='block'; }
+
+/* Fetch JSON from GitHub Pages and render */
 async function fetchDataAndRender(){
   try{
     const resp=await fetch(DATA_URL,{cache:'no-store',mode:'cors'});
@@ -153,7 +146,7 @@ async function fetchDataAndRender(){
   }catch(e){ console.error("Error loading data:",e); showErr("Error loading data.json"); }
 }
 
-/* 🔹 9. Autorun */
+/* Go! */
 fetchDataAndRender();
 </script>
 </body>
