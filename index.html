@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ETL Pipeline — AWS to Snowflake</title>
+  <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+  <style>
+    body,html,#cy {
+      margin:0; padding:0; height:100%; width:100%;
+      background:#0b1220; color:#e5e7eb;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    #legend {
+      position:absolute; top:10px; left:10px;
+      background:rgba(15,23,42,0.9);
+      padding:12px; border-radius:8px;
+      font-size:13px; color:#e5e7eb;
+    }
+    .legend-item { display:flex; align-items:center; margin-bottom:4px; }
+    .legend-color { width:14px; height:14px; margin-right:6px; border-radius:3px; }
+    #err {
+      position:absolute; bottom:10px; left:10px;
+      background:rgba(239,68,68,0.15); color:#fecaca;
+      padding:8px 10px; border-radius:8px; font-size:12px; display:none;
+    }
+  </style>
+</head>
+<body>
+  <div id="cy"></div>
+  <div id="legend">
+    <b>Legend</b><br/>
+    <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>Data Flow</div>
+    <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div>Trigger/Orchestration</div>
+    <div class="legend-item"><div class="legend-color" style="background:#f97316"></div>Notification</div>
+    <div class="legend-item"><div class="legend-color" style="background:#a855f7"></div>Monitoring</div>
+    <div class="legend-item"><div class="legend-color" style="background:#f1f5f9"></div>Security (IAM)</div>
+    <div class="legend-item"><div class="legend-color" style="background:#eab308"></div>Secrets</div>
+    <div class="legend-item"><div class="legend-color" style="background:#0ea5e9"></div>Encryption</div>
+    <div class="legend-item"><div class="legend-color" style="background:#14b8a6"></div>Network</div>
+  </div>
+  <div id="err"></div>
+
+<script>
+/* 🔹 1. Configure JSON source (your GitHub raw link) */
+const DATA_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/data.json";
+
+/* 🔹 2. Cytoscape init */
+const cy=cytoscape({
+  container:document.getElementById('cy'),
+  elements:[],
+  style:[
+    { selector:'node',
+      style:{
+        'background-fit':'cover','background-image':'data(image)',
+        'label':'data(label)','text-valign':'bottom','text-halign':'center',
+        'font-size':10,'color':'#e5e7eb','text-margin-y':4,
+        'width':70,'height':70,'border-width':2,'border-color':'#1f2937'
+      }},
+    { selector:'node.packet',
+      style:{ 'width':8,'height':8,'background-color':'#ef4444','border-width':0,'label':'','z-index':9999 }},
+    { selector:'edge[category="data"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#ef4444','target-arrow-color':'#ef4444',
+              'line-style':'dashed','line-dash-pattern':[8,4],'line-dash-offset':0 }},
+    { selector:'edge[category="trigger"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#22c55e','target-arrow-color':'#22c55e',
+              'line-style':'dashed','line-dash-pattern':[6,4],'line-dash-offset':0 }},
+    { selector:'edge[category="notification"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#f97316','target-arrow-color':'#f97316',
+              'line-style':'dotted','line-dash-pattern':[4,4],'line-dash-offset':0 }},
+    { selector:'edge[category="monitoring"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#a855f7','target-arrow-color':'#a855f7',
+              'line-style':'dashed','line-dash-pattern':[6,4],'line-dash-offset':0 }},
+    { selector:'edge[category="security"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#f1f5f9','target-arrow-color':'#f1f5f9','line-style':'solid' }},
+    { selector:'edge[category="secrets"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#eab308','target-arrow-color':'#eab308',
+              'line-style':'dashed','line-dash-pattern':[6,4],'line-dash-offset':0 }},
+    { selector:'edge[category="encryption"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#0ea5e9','target-arrow-color':'#0ea5e9',
+              'line-style':'dotted','line-dash-pattern':[4,4],'line-dash-offset':0 }},
+    { selector:'edge[category="network"]',
+      style:{ 'curve-style':'bezier','target-arrow-shape':'triangle','line-color':'#14b8a6','target-arrow-color':'#14b8a6',
+              'line-style':'dotted','line-dash-pattern':[4,4],'line-dash-offset':0 }},
+    { selector:'.hidden', style:{'display':'none'} }
+  ],
+  wheelSensitivity:0.2
+});
+
+/* 🔹 3. Helpers */
+function runLayout(){ cy.layout({ name:'cose', animate:true, animationDuration:500, randomize:true }).run(); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* 🔹 4. Streaming render */
+async function streamRender(data,delay=500){
+  cy.elements().remove();
+  for(const node of data.nodes){ cy.add({data:node}); runLayout(); await sleep(delay); }
+  for(const edge of data.edges){ cy.add({data:edge}); runLayout(); await sleep(Math.max(150,delay/2)); }
+}
+
+/* 🔹 5. Flowing dashes (all categories except security) */
+let dashOffset=0;
+setInterval(()=>{
+  dashOffset = (dashOffset + 2) % 12;
+  cy.edges('[category="data"], [category="trigger"], [category="notification"], [category="monitoring"], [category="secrets"], [category="encryption"], [category="network"]').style('line-dash-offset', dashOffset);
+},80);
+
+/* 🔹 6. Moving packets along data edges */
+const PACKETS_PER_EDGE=3, MIN_SPEED=0.003, MAX_SPEED=0.009;
+let packetObjs=[];
+function randomBetween(a,b){ return a + Math.random()*(b-a); }
+function clearPackets(){ cy.remove(packetObjs.map(p=>cy.getElementById(p.nodeId))); packetObjs=[]; }
+function initPackets(){
+  clearPackets();
+  cy.edges('[category="data"]').forEach(edge=>{
+    const color=edge.style('line-color')||'#ef4444';
+    for(let i=0;i<PACKETS_PER_EDGE;i++){
+      const id=`pkt_${edge.id()}_${i}_${Math.floor(Math.random()*1e6)}`;
+      cy.add({ group:'nodes', data:{ id }, classes:'packet', grabbable:false, selectable:false, locked:true });
+      const t0=Math.random();
+      packetObjs.push({ nodeId:id, edgeId:edge.id(), t:t0, speed:randomBetween(MIN_SPEED,MAX_SPEED), color });
+      cy.getElementById(id).style('background-color', color);
+    }
+  });
+}
+function animatePackets(){
+  packetObjs.forEach(p=>{
+    const edge=cy.getElementById(p.edgeId); if(!edge||edge.empty()) return;
+    p.t+=p.speed; if(p.t>1) p.t-=1;
+    const pos=edge.pointAt(p.t);
+    const node=cy.getElementById(p.nodeId); if(node&&pos){ node.position(pos); }
+  });
+  requestAnimationFrame(animatePackets);
+}
+
+/* 🔹 7. Collapse/expand neighbors */
+const collapsed=new Set();
+cy.on('tap','node',evt=>{
+  const id=evt.target.id();
+  if(collapsed.has(id)){ cy.getElementById(id).neighborhood().removeClass('hidden'); collapsed.delete(id); }
+  else { cy.getElementById(id).neighborhood().addClass('hidden'); collapsed.add(id); }
+  runLayout();
+});
+
+/* 🔹 8. Error handling + JSON fetch */
+function showErr(msg){ const e=document.getElementById('err'); e.textContent=msg; e.style.display='block'; }
+async function fetchDataAndRender(){
+  try{
+    const resp=await fetch(DATA_URL,{cache:'no-store',mode:'cors'});
+    if(!resp.ok){ showErr(`Failed to load data.json (${resp.status})`); return; }
+    const data=await resp.json();
+    if(!Array.isArray(data.nodes)||!Array.isArray(data.edges)){ showErr("Invalid data.json structure"); return; }
+    await streamRender(data,400); initPackets(); animatePackets();
+  }catch(e){ console.error("Error loading data:",e); showErr("Error loading data.json"); }
+}
+
+/* 🔹 9. Autorun */
+fetchDataAndRender();
+</script>
+</body>
+</html>
